@@ -86,7 +86,7 @@ To confirm that the low RMSD is structurally meaningful (not just a statistical 
 
 ---
 
-## � Reproducing the Calibration Result
+## 📏 Reproducing the Calibration Result
 
 To replicate the text-based metrics and calibration plot:
 
