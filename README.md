@@ -26,9 +26,10 @@ This repository demonstrates:
 graph TD;
     A[2D Projections via CTF] --> B(Inverse Problem);
     C[SE3-Equivariant Diffusion Prior] --> B;
-    B -->|DPS Gradient + Score| D[Refined 3D Structure];
-    D --> E{Verification};
-    E -->|Rg / PDD| F[Calibration Check];
+    D[Coordinate Calibration] -->|Scale Factor $\lambda=1.59$| B;
+    B -->|DPS Gradient + Score| E[Refined 3D Structure];
+    E --> F{Verification};
+    F -->|Rg / PDD| G[Atomic Recovery <1Å];
 ```
 
 ### 1. Generative Prior (`models/`)
