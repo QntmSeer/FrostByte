@@ -1,4 +1,4 @@
-# Research-grade Geometric ML System for Cryo-EM
+# EquiCryo: SE(3)-Equivariant Diffusion Prior for Cryo-EM
 
 ![Project Status](https://img.shields.io/badge/Status-Research_Grade-success)
 ![License](https://img.shields.io/badge/License-MIT-blue)
@@ -60,7 +60,7 @@ We benchmarked the system on **Lysozyme (1HEL)** reconstruction from noisy proje
 
 **Impact**: The uncalibrated prior caused ~40% structural contraction (Rg 0.36 vs 0.61). Implementing `coordinate_scale=1.59` and strong guidance ($\alpha=1.0$) recovered atomic resolution (<1Å error).
 
-https://github.com/user-attachments/assets/placeholder-calibration-plot.png
+![Calibration Plot](./assets/calibration_plot.png)
 
 ---
 
