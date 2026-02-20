@@ -255,25 +255,42 @@ class DiffusionModel(nn.Module):
     def get_loss(self, x_0, mask=None):
         """
         Calculates diffusion loss.
-        x_0: (B, N, 3)
-        mask: (B, N) bool tensor
+        x_0: (B, N, 3) or (B, C, D, H, W)
+        mask: optional bool tensor
         """
-        B, N, D = x_0.shape
+        B = x_0.shape[0]
+        # B, *dims = x_0.shape
+        
         t = torch.randint(0, self.timesteps, (B,), device=x_0.device).long()
         epsilon = torch.randn_like(x_0)
         
-        sqrt_alpha = self.sqrt_alphas_cumprod[t].view(B, 1, 1)
-        sqrt_one_minus_alpha = self.sqrt_one_minus_alphas_cumprod[t].view(B, 1, 1)
+        # Reshape alpha for broadcasting
+        # We need (B, 1, 1) for points or (B, 1, 1, 1, 1) for volumes
+        # Universal approach: (B, *([1]*len(dims)))
+        broadcast_shape = [B] + [1] * (x_0.dim() - 1)
+        
+        sqrt_alpha = self.sqrt_alphas_cumprod[t].view(*broadcast_shape)
+        sqrt_one_minus_alpha = self.sqrt_one_minus_alphas_cumprod[t].view(*broadcast_shape)
         
         x_t = sqrt_alpha * x_0 + sqrt_one_minus_alpha * epsilon
         
-        epsilon_pred = self.model(x_t, t, mask=mask)
+        # Model forward
+        # PointNet expects (x, t, mask)
+        # UNet expects (x, t)
+        if mask is not None:
+             epsilon_pred = self.model(x_t, t, mask=mask)
+        else:
+             epsilon_pred = self.model(x_t, t)
         
         if mask is not None:
             loss = F.mse_loss(epsilon_pred, epsilon, reduction='none')
-            # Only count loss where mask is True
-            mask_expanded = mask.unsqueeze(-1)
-            loss = (loss * mask_expanded).sum() / (mask_expanded.sum() * D)
+            # Handle mask broadcasting
+            # Mask is usually (B, N) for points.
+            # Epsilon is (B, N, 3).
+            while mask.dim() < epsilon.dim():
+                mask = mask.unsqueeze(-1)
+            
+            loss = (loss * mask).sum() / (mask.sum() * (epsilon.numel() / mask.numel()))
         else:
             loss = F.mse_loss(epsilon_pred, epsilon)
             
@@ -282,8 +299,11 @@ class DiffusionModel(nn.Module):
     @torch.no_grad()
     def sample(self, shape, device='cpu'):
         # Sampling (p sample loop) - DDPM Ancestral Sampling
-        B, N, D = shape
+        # shape: tuple, e.g. (B, N, 3) or (B, 1, 64, 64, 64)
+        B = shape[0]
         x = torch.randn(shape, device=device)
+        
+        broadcast_shape = [B] + [1] * (len(shape) - 1)
         
         for i in reversed(range(0, self.timesteps)):
             t = torch.full((B,), i, device=device, dtype=torch.long)
@@ -297,7 +317,6 @@ class DiffusionModel(nn.Module):
             alpha_bar_t = self.alphas_cumprod[i]
             
             # Mean
-            # mu = (1 / sqrt(alpha)) * (x - (beta / sqrt(1-alpha_bar)) * epsilon)
             coeff1 = 1 / torch.sqrt(alpha_t)
             coeff2 = beta_t / torch.sqrt(1 - alpha_bar_t)
             
