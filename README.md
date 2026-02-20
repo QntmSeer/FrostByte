@@ -1,6 +1,5 @@
 # EquiCryo: SE(3)-Equivariant Diffusion Prior for Cryo-EM
 
-![Project Status](https://img.shields.io/badge/Status-Research_Grade-success)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 ## TL;DR
