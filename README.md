@@ -33,12 +33,14 @@ graph TD;
 ```
 
 ### 1. Generative Prior (`models/`)
-- **Geometric Message Passing**: A custom transformer architecture operating on point clouds.
+- **Voxel Diffusion (3D U-Net)**: A high-capacity 3D symmetric model operating on $64^3$ discretized electron density grids.
+- **Geometric Message Passing**: A custom transformer architecture operating on point clouds (Phase 1-3).
 - **Equivariance**: Validated SE(3)-invariance for likelihoods and equivariance for scores ($10^{-6}$ error).
 
 ### 2. Forward Physics (`projection/`)
+- **Differentiable Radon Transform**: Computes physically accurate 2D projection integrals over 3D volumes.
 - **CTF Simulation**: Models defocus, spherical aberration, and phase contrast in Fourier space.
-- **Differentiable**: Full gradient propagation through the imaging model to the latent structure.
+- **Differentiable Gradient Flow**: Full gradient propagation through the imaging models back into the continuous latents.
 
 ### 1. SE(3)-Equivariance Verification
 We validated the geometric correctness of the score model by rotating the input structure and confirming the output score rotates identically.
@@ -105,15 +107,16 @@ python scripts/generate_ablation_table.py
 ## ⚠️ Limitations & Scope
 
 - **Point Cloud Regime**: Validated on simplified Cα point clouds, not full volumetric potential maps.
-- **Single-Protein Inference**: Current benchmarks focus on single-species reconstruction (Lysozyme/Ubiquitin).
+- **Single-Protein Inference**: Current benchmarks primarily focus on single-species reconstruction (Lysozyme/Myoglobin) to validate physical correctness before scaling network capacity to the entire CATH database.
 - **Idealized Noise**: Gaussian white noise model used for gradients; colored Cryo-EM noise is a future extension.
 
 ---
 
 ## 🔮 Ongoing Work
 
-- [ ] **MD Trajectories**: Replacing NMA ensembles with molecular dynamics data.
-- [ ] **Volumetric Density**: Extending the diffusion kernel to 3D voxel grids.
+- [x] **Volumetric Density** (v2.0): Extended the diffusion kernel to 3D voxel grids utilizing a U-Net architecture and Radon forward model.
+- [ ] **Data Scaling**: Expanding training compute across $O(10^3)$ non-redundant protein domains to achieve Out-of-Distribution (OOD) generalization.
+- [ ] **MD Trajectories**: Replacing static models with molecular dynamics ensemble data.
 - [ ] **Heterogeneity Analysis**: Inference of discrete conformational states from mixture data.
 - [ ] **Uncertainty Quantification**: VAE-style posterior variance estimation.
 
