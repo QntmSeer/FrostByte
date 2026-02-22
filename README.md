@@ -82,6 +82,9 @@ diffusion-cryoem-prior/
 - CTF simulation in Fourier space
 - **Result**: Equivariance error $1.0 \times 10^{-6}$
 
+![CTF Physics](./assets/ctf_visualization.png)
+*Figure: Simulated Contrast Transfer Function applied to a synthetic 2D projection. Phase flips at CTF zeros are clearly visible.*
+
 ### Phase 3: Calibration & Scale Repair
 Identified a critical **scale mismatch** between the normalized latent space ($z \sim \mathcal{N}(0,I)$) and physical Angstrom coordinates.
 
@@ -93,10 +96,22 @@ Identified a critical **scale mismatch** between the normalized latent space ($z
 
 > RMSD computed after Kabsch alignment. Coordinate scale $\lambda = 1.59$ prevents prior from contracting the structure by ~40%.
 
+![Collapse Diagnostics](./assets/collapse_diagnostics.png)
+*Figure: Radius of Gyration (Rg) as guidance strength α increases. Prior-induced collapse (left) is repaired by coordinate scaling (right).*
+
+![Calibration Plot](./assets/calibration_plot.png)
+*Figure: Ablation over guidance strength α. α=1.0 with coordinate_scale=1.59 achieves <1Å aligned RMSD.*
+
+![Atomic Recovery](./assets/atomic_recovery.png)
+*Figure: Ground truth (red) vs reconstructed (blue) point cloud after Kabsch alignment.*
+
 ### Phase 4: Generalist Multi-Protein Model
 - Trained on a diverse **CATH-20 subset** (19 proteins, Lysozyme excluded as OOD test)
 - Evaluated zero-shot generalization to **Myoglobin (1MBN)**
 - **Finding**: OOD generalization gap requires scale, not architecture change
+
+![Generalist Myoglobin](./assets/generalist_result.png)
+*Figure: Generated structure from generalist prior vs Myoglobin ground truth. Shape is preserved but fold-specific details require more training scale.*
 
 ### Phase 5: Volumetric Electron Density (Current)
 Transitioned from point-cloud Cα atoms to **continuous 3D electron density grids**, enabling direct compatibility with real Cryo-EM MRC data.
@@ -109,6 +124,15 @@ Transitioned from point-cloud Cα atoms to **continuous 3D electron density grid
 
 **Verified:** Single-protein density recovery (Lysozyme overfitting benchmark).
 Cross-Correlation with GT volume reaches **CC = 0.85** after coordinate scaling fix.
+
+![Volume Reconstruction](./assets/volume_reconstruction.png)
+*Figure: Left — input 2D projection. Centre — ground truth central slice. Right — reconstructed density slice from 3 projections.*
+
+![Volume Reconstruction HD](./assets/volume_reconstruction_hd.png)
+*Figure: High-resolution Z=32 slice comparison after single-protein overfitting (50 epochs). The reconstructed density closely matches the ground truth contours.*
+
+![Myoglobin Benchmark](./assets/benchmark_1mbn.png)
+*Figure: OOD volumetric benchmark on Myoglobin (1MBN). The model identifies the general shape but lacks fine-grained structural detail without sufficient training scale.*
 
 ```bash
 # Reproduce the Phase 5 volumetric reconstruction
