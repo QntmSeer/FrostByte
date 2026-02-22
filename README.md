@@ -131,6 +131,9 @@ Cross-Correlation with GT volume reaches **CC = 0.85** after coordinate scaling 
 ![Volume Reconstruction HD](./assets/volume_reconstruction_hd.png)
 *Figure: High-resolution Z=32 slice comparison after single-protein overfitting (50 epochs). The reconstructed density closely matches the ground truth contours.*
 
+![Volume Reconstruction Animated](./assets/volume_reconstruction_hd.gif)
+*Animation: Z-axis sweep through the full reconstructed $64^3$ density volume vs ground truth. The continuous gradient confirms the model has learned the 3D structure, not just a 2D projection.*
+
 ![Myoglobin Benchmark](./assets/benchmark_1mbn.png)
 *Figure: OOD volumetric benchmark on Myoglobin (1MBN). The model identifies the general shape but lacks fine-grained structural detail without sufficient training scale.*
 
