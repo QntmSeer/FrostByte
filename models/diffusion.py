@@ -311,6 +311,11 @@ class DiffusionModel(nn.Module):
             # Predict noise
             epsilon_theta = self.model(x, t)
             
+            # If the model is the TriPlaneUNet, it returns a list of 3 planes [XY, XZ, YZ].
+            # We must concatenate them back into the shape of x (B, 3C, H, W) to perform diffusion math.
+            if isinstance(epsilon_theta, list):
+                epsilon_theta = torch.cat(epsilon_theta, dim=1)
+            
             # Inverse parameters
             beta_t = self.betas[i]
             alpha_t = 1 - beta_t
