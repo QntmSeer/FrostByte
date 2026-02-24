@@ -36,14 +36,9 @@ def reconstruct_volume_dps(model, projector, y_meas, rot_matrix, device, step_sc
         
         x_0_hat = (x - sqrt_one_minus_alpha_bar * epsilon_theta) / sqrt_alpha_bar
         
-        # 2. Measurement Consistency (Gradient)
-        # Project x_0_hat
-        # We need to broadcast x_0_hat for K views?
-        # x_0_hat: (1, 1, L, L, L)
-        # rots: (K, 3, 3)
-        # We can repeat x_0_hat K times -> (K, 1, L, L, L)
+        # Broadcast x_0_hat for K views: (1,1,L,L,L) -> (K,1,L,L,L)
         x_0_rep = x_0_hat.repeat(K, 1, 1, 1, 1)
-        y_hat = projector(x_0_rep, rot_matrix) # (K, 1, L, L)
+        y_hat = projector(x_0_rep, rot_matrix)  # (K, 1, L, L)
         
         loss = F.mse_loss(y_hat, y_meas)
         
@@ -60,12 +55,9 @@ def reconstruct_volume_dps(model, projector, y_meas, rot_matrix, device, step_sc
         
         mean = coeff1 * (x.detach() - coeff2 * epsilon_theta.detach())
         
-        # Gradient descent guidance
-        # Scale step size by 1/grad_norm
+        # Normalise gradient, then apply DPS guidance
         norm = grad.norm()
         if norm > 0: grad = grad / norm
-        
-        # DPS typically uses fixed scale
         mean = mean - step_scale * grad
         
         if i > 0:
@@ -98,45 +90,31 @@ def run_verification():
 
     # 2. Prepare Ground Truth (Lysozyme)
     data_path = os.path.join(base, "data", "processed", "cath_subset.pt")
-    # Quick hack: fetch one coords from dict
+    # Load data and extract Lysozyme (1hel) if available
     data_dict = torch.load(data_path, weights_only=False)
     if '1hel' in data_dict:
         coords = data_dict['1hel']
     else:
         coords = list(data_dict.values())[0]
         
-    # Voxelize
+    # Voxelize ground truth volume
     print("Voxelizing Ground Truth...")
-    # Manually call static method
-    # Center coords first
-    coords = coords - coords.mean(dim=0, keepdim=True)
-    # Scale by 10.0 (match training)
-    coords = coords * 10.0
+    coords = coords - coords.mean(dim=0, keepdim=True)  # centre
+    coords = coords * 10.0                               # match training scale
     vol_gt = VolumeDataset.voxelize_gaussian(coords, 64, 1.0, 1.0).to(device)
     vol_gt = vol_gt.unsqueeze(0).unsqueeze(0) # (1, 1, 64, 64, 64)
     
     # 3. Simulate Projections
     projector = RadonProjector(64).to(device)
-    # 3 Orthogonal views
-    R = torch.eye(3, device=device).unsqueeze(0).repeat(3, 1, 1)
-    # View 1: Identity (Z-axis)
-    # View 2: Rot 90 X
-    # View 3: Rot 90 Y
-    # ... simple random views might be better to avoid symmetry issues
-    # 10 views for higher resolution
-    R = projector.random_rotation_matrix(10, device=device)
+    R = projector.random_rotation_matrix(10, device=device)  # 10 random views
     
     print("Simulating Projections...")
     with torch.no_grad():
         x_rep = vol_gt.repeat(10, 1, 1, 1, 1)
-        y_meas = projector(x_rep, R)
-        # Add noise?
-        y_meas = y_meas + torch.randn_like(y_meas) * 0.0 # Clean for now
+        y_meas = projector(x_rep, R)  # clean projections
         
-    # 4. Reconstruct
+    # Reconstruct via DPS-guided reverse diffusion
     print("Reconstructing Volume...")
-    # step_scale=100.0 was exploding, but 1.0 might be too soft for high resolution.
-    # Increasing to 5.0 to strictly enforce measurement consistency.
     vol_rec = reconstruct_volume_dps(model, projector, y_meas, R, device, step_scale=5.0)
     
     print(f"Rec Range: [{vol_rec.min():.2f}, {vol_rec.max():.2f}] Mean: {vol_rec.mean():.2f}")

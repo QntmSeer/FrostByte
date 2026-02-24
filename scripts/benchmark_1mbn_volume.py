@@ -17,62 +17,28 @@ from data.volume_dataset import VolumeDataset
 from projection.radon import RadonProjector
 
 def fetch_1mbn_volume(device):
-    # Fetch 1MBN coords (same logic as before)
-    # We can just download it or check if it exists
+    """Load Myoglobin (1MBN) Cα coordinates and voxelise into a 64^3 density grid."""
     base = r"c:\Users\Gebruiker\Documents\Computational Bio\diffusion-cryoem-prior"
     pdb_path = os.path.join(base, "data", "raw", "1mbn.pdb")
-    
+
     if not os.path.exists(pdb_path):
-        # Fallback: create dummy or try to fetch?
-        # Assuming it exists from previous steps or we fetch it
-        # Let's try to fetch if missing
         import biotite.database.rcsb as rcsb
-        file_path = rcsb.fetch("1mbn", "pdb", os.path.dirname(pdb_path))
-    
+        rcsb.fetch("1mbn", "pdb", os.path.dirname(pdb_path))
+
     pdb_file = pdb.PDBFile.read(pdb_path)
     structure = pdb_file.get_structure(model=1)
     ca = structure[structure.atom_name == "CA"]
     coords = torch.tensor(ca.coord, dtype=torch.float32)
-    
-    # Center
+
+    # Centre and voxelise using physical Angstrom coordinates (1A/voxel, 64^3 grid)
     coords = coords - coords.mean(dim=0, keepdim=True)
-    
-    # Normalize? VolumeDataset expects Angstroms usually
-    # But our model was trained on dataset where we might have normalized?
-    # Wait, in CATH subset we normalized by /10.0 in "fetch_cath_subset.py".
-    # BUT VolumeDataset loads that .pt file which IS normalized.
-    # So the model expects inputs in "Latent Scale" (approx radius 1.5-3.0 voxels?)
-    # NO. 
-    # VolumeDataset takes coords, subtracts centroid.
-    # Then it does: indices = (coords / voxel_size) + (L/2).
-    # If coords are small (~1.5), they will all map to center voxel.
-    # If coords are Angstrom (~15), they map nicely.
-    
-    # CHECK: Did "fetch_cath_subset.py" SAVE normalized coords or just valid ones?
-    # It saved: coords = coords / 10.0
-    # So the data on disk is /10.0.
-    # So VolumeDataset sees small coords.
-    # Voxel_size=1.0.
-    # indices = (small_coords) + 32.
-    # This means the training data occupies a tiny region in the center of 64^3 grid.
-    # This is bad. 64^3 grid with 1A pixels expects 64A object.
-    # If object is 2A wide (normalized), it's just a dot.
-    
-    # CRITICAL FIX: The user noted the result looks like a "dot".
-    # This is because we normalized by 10.0, compressing the 30A protein to 3.0 units.
-    # With voxel_size=1.0, it occupies only 3 voxels!
-    # To show the "Contour", we must use PHYSICAL coordinates.
-    # coords = coords / 10.0  <-- REMOVE THIS
-    
-    # Voxelize
-    # 1MBN is approx 30-40A diameter. 64^3 grid with 1.0A size fits it perfectly.
     vol = VolumeDataset.voxelize_gaussian(coords, 64, 1.0, 1.0)
     return vol.unsqueeze(0).unsqueeze(0).to(device)
 
 def reconstruct_volume(model, projector, y_meas, rot_matrix, device):
-    # Same rec function
+    """DPS-guided reverse diffusion reconstruction from measured projections."""
     x = torch.randn(1, 1, 64, 64, 64, device=device)
-    step_scale = 1.0  # Reduced from 100.0 to prevent divergence
+    step_scale = 1.0
     
     for i in tqdm(reversed(range(0, model.timesteps))):
         t = torch.full((1,), i, device=device, dtype=torch.long)
@@ -120,9 +86,8 @@ def run_benchmark():
     print(f"GT Volume Mass: {vol_gt.sum().item():.2f}")
     
     projector = RadonProjector(64).to(device)
-    # 3 Projections
-    R = projector.random_rotation_matrix(3, device=device)
-    y_meas = projector(vol_gt.repeat(3,1,1,1,1), R)
+    R = projector.random_rotation_matrix(3, device=device)  # 3 random views
+    y_meas = projector(vol_gt.repeat(3, 1, 1, 1, 1), R)
     
     # 3. Reconstruct
     vol_rec = reconstruct_volume(model, projector, y_meas, R, device)
