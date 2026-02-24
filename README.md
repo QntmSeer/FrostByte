@@ -1,4 +1,4 @@
-# EquiCryo: SE(3)-Equivariant Diffusion Prior for Cryo-EM
+# FrostByte: SE(3)-Equivariant Diffusion Prior for Cryo-EM
 
 ![License](https://img.shields.io/badge/License-MIT-blue) ![Phase](https://img.shields.io/badge/Phase-5%20Volumetric-brightgreen)
 
@@ -153,8 +153,8 @@ python scripts/benchmark_1mbn_volume.py
 ## ⚙️ Installation
 
 ```bash
-git clone https://github.com/QntmSeer/EquiCryo.git
-cd EquiCryo
+git clone https://github.com/QntmSeer/FrostByte.git
+cd FrostByte
 pip install -r requirements.txt
 ```
 
