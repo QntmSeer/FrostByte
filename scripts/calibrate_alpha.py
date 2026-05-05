@@ -69,7 +69,7 @@ def calibrate_alpha():
         
     # 5. Plot
     plt.figure(figsize=(8, 6))
-    plt.plot(alphas, rgs, 'o-', linewidth=2, color='#2196F3')
+    plt.plot(alphas, rgs, 'o-', linewidth=2, color='#2196F3', label='Reconstructed Rg')
     plt.axhline(y=rg_gt, color='k', linestyle='--', label='Ground Truth')
     plt.axhline(y=0.3818, color='g', linestyle=':', label='Training Mean Rg')
     plt.xscale('log')
