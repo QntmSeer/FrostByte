@@ -92,6 +92,62 @@ class DiffusionModel(nn.Module):
         return x
 
     @torch.no_grad()
+    def sample_ddim(self, shape, steps=50, eta=0.0, device='cpu'):
+        """
+        DDIM sampling (Denoising Diffusion Implicit Models).
+        Enables fast sampling in 20-50 steps by skipping timesteps.
+        Args:
+            shape: Tensor shape (B, C, H, W).
+            steps: Number of sampling steps (smaller than total timesteps).
+            eta: Controls deterministic vs stochastic (eta=0.0 is deterministic, eta=1.0 is DDPM).
+        """
+        B = shape[0]
+        x = torch.randn(shape, device=device)
+        
+        # Sub-sample timesteps from 0 to total_timesteps - 1
+        times = torch.linspace(-1, self.timesteps - 1, steps + 1, dtype=torch.long, device=device)
+        
+        for i in reversed(range(1, steps + 1)):
+            curr_t_idx = times[i]
+            prev_t_idx = times[i - 1]
+            
+            t_curr = torch.full((B,), curr_t_idx, device=device, dtype=torch.long)
+            
+            # Predict noise epsilon
+            eps_theta = self.model(x, t_curr)
+            if isinstance(eps_theta, list):
+                eps_theta = torch.cat(eps_theta, dim=1)
+            
+            # Fetch cumulative alphas
+            alpha_bar_curr = self.alphas_cumprod[curr_t_idx]
+            alpha_bar_prev = self.alphas_cumprod[prev_t_idx] if prev_t_idx >= 0 else torch.tensor(1.0, device=device)
+            
+            # Predict x_0
+            pred_x0 = (x - torch.sqrt(1. - alpha_bar_curr) * eps_theta) / torch.sqrt(alpha_bar_curr)
+            pred_x0.clamp_(-6.0, 6.0)
+            
+            # Calculate standard deviation parameter sigma
+            if eta > 0:
+                var = ((1. - alpha_bar_prev) / (1. - alpha_bar_curr)) * (1. - alpha_bar_curr / alpha_bar_prev)
+                sigma = eta * torch.sqrt(var)
+            else:
+                sigma = 0.0
+            
+            # Direction pointing to x_t
+            dir_xt = torch.sqrt(1. - alpha_bar_prev - sigma**2) * eps_theta
+            
+            # Denoise step
+            if prev_t_idx >= 0:
+                noise = torch.randn_like(x) if sigma > 0 else 0
+                x = torch.sqrt(alpha_bar_prev) * pred_x0 + dir_xt + sigma * noise
+            else:
+                x = pred_x0
+            x.clamp_(-6.0, 6.0)
+            
+        return x
+
+    @torch.no_grad()
+
     def sample_cascaded(self, shape, low_res, device='cpu'):
         """Conditioned sampling for Stage 2 (Super-Resolution)."""
         B = shape[0]
