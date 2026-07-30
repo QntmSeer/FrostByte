@@ -25,8 +25,12 @@ experiments/checkpoints/*.pth
 data/raw/
 data/processed/*.pt
 *.zip
-*.gif
 *.mp4
+
+# Allow tracked media assets in assets/
+!assets/*.gif
+!assets/*.png
+!assets/*.svg
 
 # Test output images
 test_*.png

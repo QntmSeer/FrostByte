@@ -138,6 +138,9 @@ Cross-Correlation with GT volume reaches **CC = 0.85** after coordinate scaling 
 ![Volume Reconstruction Animated](./assets/volume_reconstruction_hd.gif)
 *Animation: Z-axis sweep through the full reconstructed $64^3$ density volume vs ground truth. The continuous gradient confirms the model has learned the 3D structure, not just a 2D projection.*
 
+![3D Prediction Iteration Loop](./assets/evolution.gif)
+*Animation: Iteration-by-iteration 3D reverse diffusion sampling trajectory. Watch pure 3D Gaussian noise progressively denoise into the target 3D macromolecular electron density map under Radon guidance.*
+
 ![Myoglobin Benchmark](./assets/benchmark_1mbn.png)
 *Figure: OOD volumetric benchmark on Myoglobin (1MBN). The model identifies the general shape but lacks fine-grained structural detail without sufficient training scale.*
 
