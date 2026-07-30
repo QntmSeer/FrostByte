@@ -1,4 +1,4 @@
-
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -6,27 +6,30 @@ __pycache__/
 .Python
 env/
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
 .pytest_cache/
 .coverage
-htmlcov/
 .vscode/
 .idea/
 *.log
-experiments/results/*.png
+
+# Paper Materials (Private)
+paper/
+scripts/compile_*.py
+
+# Large Data, Checkpoints & Zip Backups
+experiments/results/
+experiments/sandbox/
 experiments/checkpoints/*.pth
 data/raw/
-!data/processed/*.pt
+data/processed/*.pt
+*.zip
+*.gif
+*.mp4
+
+# Test output images
+test_*.png
+test_*.gif
+scratch/
+.gemini/
