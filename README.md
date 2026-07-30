@@ -135,9 +135,6 @@ Cross-Correlation with GT volume reaches **CC = 0.85** after coordinate scaling 
 ![Volume Reconstruction HD](./assets/volume_reconstruction_hd.png)
 *Figure: High-resolution Z=32 slice comparison after single-protein overfitting (50 epochs). The reconstructed density closely matches the ground truth contours.*
 
-![Volume Reconstruction Animated](./assets/volume_reconstruction_hd.gif)
-*Animation: Z-axis sweep through the full reconstructed $64^3$ density volume vs ground truth. The continuous gradient confirms the model has learned the 3D structure, not just a 2D projection.*
-
 ![3D Continuous Density Reconstruction Sweep](./assets/3d_protein_reconstruction_simulation.gif)
 *Animation: 6-Panel Continuous Z-Axis Density Sweep Video Simulation across novel protein structures (1A3N Hemoglobin Alpha & 1CQY Flavodoxin Fold). Displays Ground Truth 3D Density (left), Noisy Observation at -5dB SNR (centre), and Score-Matching Diffusion Prior Reconstruction (right).*
 
