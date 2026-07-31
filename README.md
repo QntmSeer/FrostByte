@@ -138,18 +138,12 @@ Cross-Correlation with GT volume reaches **CC = 0.85** after coordinate scaling 
 ![3D Continuous Density Reconstruction Sweep](./assets/3d_protein_reconstruction_simulation.gif)
 *Animation: 6-Panel Continuous Z-Axis Density Sweep Video Simulation across novel protein structures (1A3N Hemoglobin Alpha & 1CQY Flavodoxin Fold). Displays Ground Truth 3D Density (left), Noisy Observation at -5dB SNR (centre), and Score-Matching Diffusion Prior Reconstruction (right).*
 
-![Myoglobin Benchmark](./assets/benchmark_1mbn.png)
-*Figure: OOD volumetric benchmark on Myoglobin (1MBN). The model identifies the general shape but lacks fine-grained structural detail without sufficient training scale.*
-
 ```bash
 # Reproduce the Phase 5 volumetric reconstruction
 python scripts/verify_volume_reconstruction.py
 
 # HD visualization of reconstruction vs ground truth
 python scripts/visualize_volume_hd.py
-
-# OOD benchmark on Myoglobin (1MBN)
-python scripts/benchmark_1mbn_volume.py
 ```
 
 ---
