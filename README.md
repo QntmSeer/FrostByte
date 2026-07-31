@@ -138,6 +138,9 @@ Cross-Correlation with GT volume reaches **CC = 0.85** after coordinate scaling 
 ![3D Continuous Density Reconstruction Sweep](./assets/3d_protein_reconstruction_simulation.gif)
 *Animation: 6-Panel Continuous Z-Axis Density Sweep Video Simulation across novel protein structures (1A3N Hemoglobin Alpha & 1CQY Flavodoxin Fold). Displays Ground Truth 3D Density (left), Noisy Observation at -5dB SNR (centre), and Score-Matching Diffusion Prior Reconstruction (right).*
 
+![Zero-Shot Generalization Gallery](./assets/unseen_proteins_reconstruction_gallery.png)
+*Figure: 3D Volumetric Electron Density Recovery Benchmark across novel unseen PDB protein folds (1A3N Hemoglobin Alpha, 1CQY Flavodoxin Fold, 1TFG Transcription Factor) under severe -5dB phase noise.*
+
 ```bash
 # Reproduce the Phase 5 volumetric reconstruction
 python scripts/verify_volume_reconstruction.py
