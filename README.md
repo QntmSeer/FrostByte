@@ -7,19 +7,19 @@
 ![License](https://img.shields.io/badge/License-MIT-blue) ![Phase](https://img.shields.io/badge/Phase-5%20Volumetric-brightgreen) ![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange) ![CUDA](https://img.shields.io/badge/CUDA-12.0%2B-green)
 
 ## TL;DR
-**FrostByte** is a continuous score-based generative diffusion framework for 3D macromolecular electron density reconstruction from noisy 2D Cryo-EM projections ($\text{SNR} < -5$\,dB).
-The project evolves from geometric point-cloud message passing (Phase 1–3) → continuous 3D volumetric electron density fields with Diffusion Posterior Sampling (Phase 5) → scalable continuous Tri-Plane neural fields for $128^3+$ resolution (Phase 6–7).
+**FrostByte** is a continuous score-based generative diffusion framework for 3D macromolecular electron density reconstruction from noisy 2D Cryo-EM projections (SNR &lt; -5 dB).
+The project evolves from geometric point-cloud message passing (Phase 1–3) → continuous 3D volumetric electron density fields with Diffusion Posterior Sampling (Phase 5) → scalable continuous Tri-Plane neural fields for 128³+ resolution (Phase 6–7).
 
 ---
 
 ## ⚡ Why This Matters
-Cryo-EM single-particle reconstruction and Cryo-Electron Tomography (Cryo-ET) are severely ill-posed inverse problems due to extreme radiation damage dose limits ($\text{SNR} < -5$\,dB), Contrast Transfer Function (CTF) phase flips, and missing wedge geometries. Traditional regularizers (RELION, cryoSPARC) rely on empirical low-pass filtering and solvent masks.
+Cryo-EM single-particle reconstruction and Cryo-Electron Tomography (Cryo-ET) are severely ill-posed inverse problems due to extreme radiation damage dose limits (SNR &lt; -5 dB), Contrast Transfer Function (CTF) phase flips, and missing wedge geometries. Traditional regularizers (RELION, cryoSPARC) rely on empirical low-pass filtering and solvent masks.
 
 **Generative Diffusion Priors** provide physical, learnable structural regularization:
 - **Differentiable Physics Modeling**: Forward CTF modulation and differentiable 3D Radon line-integral projections.
-- **Diffusion Posterior Sampling (DPS)**: Reverse SDE trajectories guided by measurement loss gradients $\nabla_{\mathbf{x}_t} \|\mathbf{y} - \mathcal{R}_{\mathbf{R}}(\hat{\mathbf{x}}_0)\|_2^2$.
+- **Diffusion Posterior Sampling (DPS)**: Reverse SDE trajectories guided by measurement loss gradients `∇_{x_t} ||y - R_R(x̂_0)||²`.
 - **Workstation-Accessible Execution**: Optimized for single-GPU mobile workstations (e.g. NVIDIA RTX A2000 Laptop GPU) via PyTorch FP16 Automatic Mixed Precision (AMP).
-- **Scale Calibration & Stability**: Elimination of prior-induced volume collapse via coordinate scaling ($\lambda = 1.59$).
+- **Scale Calibration & Stability**: Elimination of prior-induced volume collapse via coordinate scaling (λ = 1.59).
 
 ---
 
@@ -85,34 +85,34 @@ diffusion-cryoem-prior/
 
 Evaluated live on a mobile workstation equipped with an **NVIDIA RTX A2000 Laptop GPU (4 GB physical VRAM, 3.68 GiB usable)**, CUDA 13.0:
 
-| Spatial Grid | Batch Size ($B$) | Precision | Latency / Volume | Peak Memory | GPU Compute Utilization |
+| Spatial Grid | Batch Size (B) | Precision | Latency / Volume | Peak Memory | GPU Compute Utilization |
 |---|---|---|---|---|---|
-| **$32^3$** ($32\times32\times32$) | 1 | FP32 | 19.17 ms | 132 MB | 12% |
-| **$32^3$** ($32\times32\times32$) | 4 | **FP16 AMP** | **4.46 ms** | 132 MB | **95–100%** |
-| **$64^3$** ($64\times64\times64$) | 1 | FP32 | 30.65 ms | 342 MB | 15% |
-| **$64^3$** ($64\times64\times64$) | 4 | **FP16 AMP** | **16.16 ms** | 343 MB | **90–98%** |
-| **$128^3$** ($128\times128\times128$) | 1 | FP32 | 228.53 ms | 2.05 GB | 85–90% |
+| **32³** (32×32×32) | 1 | FP32 | 19.17 ms | 132 MB | 12% |
+| **32³** (32×32×32) | 4 | **FP16 AMP** | **4.46 ms** | 132 MB | **95–100%** |
+| **64³** (64×64×64) | 1 | FP32 | 30.65 ms | 342 MB | 15% |
+| **64³** (64×64×64) | 4 | **FP16 AMP** | **16.16 ms** | 343 MB | **90–98%** |
+| **128³** (128×128×128) | 1 | FP32 | 228.53 ms | 2.05 GB | 85–90% |
 
-> **Key Finding**: Batched FP16 Automatic Mixed Precision (AMP) delivers a **4.30x speedup** at $32^3$ and **1.90x speedup** at $64^3$, eliminating GPU dispatch starvation while remaining safely within the 3.68 GiB VRAM envelope.
+> **Key Finding**: Batched FP16 Automatic Mixed Precision (AMP) delivers a **4.30x speedup** at 32³ and **1.90x speedup** at 64³, eliminating GPU dispatch starvation while remaining safely within the 3.68 GiB VRAM envelope.
 
 ---
 
 ## 🔬 Development Phases & Visual Results
 
 ### Phase 1–3: Geometric Equivariance & Coordinate Calibration
-- **Equivariance Verification**: SE(3) equivariance error validated at $1.0 \times 10^{-6}$.
-- **Scale Mismatch Discovery & Fix**: Identified that normalized latent sampling contracts physical protein densities. Applying coordinate scale factor $\lambda = 1.59$ restored true Radius of Gyration ($R_g$) bounds ($< 0.8$\,Å RMSD).
+- **Equivariance Verification**: SE(3) equivariance error validated at 1.0 × 10⁻⁶.
+- **Scale Mismatch Discovery & Fix**: Identified that normalized latent sampling contracts physical protein densities. Applying coordinate scale factor λ = 1.59 restored true Radius of Gyration (Rg) bounds (&lt; 0.8 Å RMSD).
 
 ![CTF Physics](./assets/ctf_visualization.png)
 *Figure: Simulated Contrast Transfer Function applied to a 2D projection with visible phase reversals.*
 
 ![Calibration Plot](./assets/calibration_plot.png)
-*Figure: Calibration sweep over guidance strength $\alpha$. $\alpha=1.0$ with $\lambda=1.59$ achieves $<0.8$\,Å aligned RMSD.*
+*Figure: Calibration sweep over guidance strength α. α=1.0 with λ=1.59 achieves &lt;0.8 Å aligned RMSD.*
 
 ---
 
 ### Phase 5: Volumetric Electron Density Recovery
-Transitioned to continuous 3D spatial grids ($64^3$) compatible with experimental Cryo-EM MRC densities:
+Transitioned to continuous 3D spatial grids (64³) compatible with experimental Cryo-EM MRC densities:
 - `VolumeDataset`: Voxelization of macromolecular PDB coordinates via 3D Gaussian kernels.
 - `UNet3D`: 3D volumetric convolutional score network.
 - `RadonTransform`: Differentiable line-integral projection operator.
@@ -132,12 +132,12 @@ Transitioned to continuous 3D spatial grids ($64^3$) compatible with experimenta
 ---
 
 ### Phase 6–7: Scalable Tri-Plane Latent Diffusion
-To overcome $O(N^3)$ volumetric memory scaling for $128^3+$ grids:
-- **Tri-Plane Representation**: Three orthogonal 2D feature planes ($XY, XZ, YZ$) decoded by a shared continuous MLP.
+To overcome O(N³) volumetric memory scaling for 128³+ grids:
+- **Tri-Plane Representation**: Three orthogonal 2D feature planes (XY, XZ, YZ) decoded by a shared continuous MLP.
 - **Latent 2D Diffusion**: Denoising prior trained over compressed Tri-Plane feature maps.
 
 ![Tri-Plane Prior Gallery](./assets/reconstruction_gallery_v7.png)
-*Figure: High-capacity Tri-Plane reconstruction gallery at $128^3$ spatial resolution across benchmark structures.*
+*Figure: High-capacity Tri-Plane reconstruction gallery at 128³ spatial resolution across benchmark structures.*
 
 ---
 
@@ -167,10 +167,10 @@ python scripts/verify_volume_reconstruction.py
 
 To maintain scientific rigor and transparency, the current implementation operates under the following explicit boundary conditions:
 
-1. **Known Pose Orientations**: The DPS likelihood guidance assumes projection viewing angles $\mathbf{R}_i \in \text{SO}(3)$ are known or pre-estimated. Joint blind pose estimation and volume refinement (as in RELION) is an active area of future development.
-2. **Synthetic Noise vs Real Micrographs**: Current benchmarks use simulated additive Gaussian noise ($\text{SNR} \in [-10\text{dB}, 0\text{dB}]$) with Contrast Transfer Function (CTF) modulation. Experimental Cryo-EM micrographs exhibit non-Gaussian shot noise, beam-induced motion blur, and ice gradient artifacts.
-3. **Dataset Scale & Generalization**: Training on limited structural subsets provides strong fold-specific regularization; generalized zero-shot foundation priors require training across $10^4+$ diverse structures from RCSB PDB and EMDB.
-4. **Volumetric Memory Scaling**: Direct $O(N^3)$ voxel diffusion requires $\sim 2.05$\,GB VRAM for $128^3$ volumes. Sub-Ångström full-micrograph reconstructions ($512^3+$) require Tri-Plane neural representations (Phase 6–7) or spatial patch decomposition.
+1. **Known Pose Orientations**: The DPS likelihood guidance assumes projection viewing angles R_i ∈ SO(3) are known or pre-estimated. Joint blind pose estimation and volume refinement (as in RELION) is an active area of future development.
+2. **Synthetic Noise vs Real Micrographs**: Current benchmarks use simulated additive Gaussian noise (SNR ∈ [-10 dB, 0 dB]) with Contrast Transfer Function (CTF) modulation. Experimental Cryo-EM micrographs exhibit non-Gaussian shot noise, beam-induced motion blur, and ice gradient artifacts.
+3. **Dataset Scale & Generalization**: Training on limited structural subsets provides strong fold-specific regularization; generalized zero-shot foundation priors require training across 10,000+ diverse structures from RCSB PDB and EMDB.
+4. **Volumetric Memory Scaling**: Direct O(N³) voxel diffusion requires ~2.05 GB VRAM for 128³ volumes. Sub-Ångström full-micrograph reconstructions (512³+) require Tri-Plane neural representations (Phase 6–7) or spatial patch decomposition.
 5. **Iterative Sampling Latency**: Continuous reverse-SDE sampling requires multiple denoising steps (e.g. 50–1,000 steps), which is computationally more demanding than single-pass feed-forward inversion networks.
 
 ---
